@@ -1,0 +1,5 @@
+*.ppt
+*.pptx
+*.db
+*.pkl
+__pycache__
