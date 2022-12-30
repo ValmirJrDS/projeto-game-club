@@ -156,6 +156,44 @@ pipe_rf = pipeline.Pipeline(steps = [("Imput 0", input_0),
                                      ("Imput -1", input_1),
                                      ("One Hot", onehot),
                                      ("Modelo", grid_search)])
+
+""" CODIGOS ABAIXOS ESTÃO MINIMIZADOS PARA SEREM USADOS EM FUTUROS PROJETOS.
+			DEPOIS DE TESTAR TODOS ALGORITIMOS VERIFICAMOS QUE O RANDOM_FOREST TEVE
+			MELHOR DESEMPENHO ENTÃO IREMOS REALIZAR O TUNNING SOMENTE NELE  """
+
+""" Pipeline Ada Boost """
+
+""" pipe_ada = pipeline.Pipeline(steps=[("Imput 0", input_0),
+                                      ("Imput -1", input_1),
+                                      ("One Hot", onehot),
+                                      ("Modelo", ada_clf)]) """
+									  
+""" Pipeline Arvore de Decisão """
+
+""" pipe_tree = pipeline.Pipeline(steps=[("Imput 0", input_0),
+                                      ("Imput -1", input_1),
+                                      ("One Hot", onehot),
+                                      ("Modelo", dt_clf)])
+ """
+
+""" Pipeline Regressão Logistica """
+
+""" pipe_rl = pipeline.Pipeline(steps=[("Imput 0", input_0),
+                                      ("Imput -1", input_1),
+                                      ("One Hot", onehot),
+                                      ("Modelo", rl_clf)]) """
+
+""" Dicionario com Todas as Pipeline """
+
+""" models = {"Random Forest":pipe_rf, 
+		  "AdaBoost":pipe_ada, 
+		  "Decision tree":pipe_tree,
+		  "Logistic Regression": pipe_rl} """
+#%%
+
+"""  """
+
+		  
 # %%
 """ Funçao responsavel para realizar o treinamento do Modelo o que faz 
 o usuario assinar nos proximos 15dd usando as estatisticas dos ulimos 30dd"""
@@ -203,19 +241,6 @@ print("roc_train", roc_train)
 print("Base Line: ", round((1-y_train.mean())*100, 2))
 print("Acuracia: ", acc_train)
 # %%
-# TESTAR O MODELO
- 
-y_test_pred = pipe_rf.predict(X_test)
-y_test_prob = pipe_rf.predict_proba(X_test)
-
-# Medir o Modelo
-acc_test = round(100*metrics.accuracy_score(y_test, y_test_pred), 2)
-roc_test = metrics.roc_auc_score(y_test, y_test_prob[:, 1])
-
-print("Base Line: ", round((1-y_test.mean())*100, 2))
-print("acc_test", acc_test)
-print("roc_test", roc_test)
-#%%
 
 skplt.metrics.plot_roc(y_train, y_train_prob)
 plt.show()
@@ -230,7 +255,31 @@ plt.show()
 	realmente assinar """
 skplt.metrics.plot_lift_curve(y_train, y_train_prob)
 plt.show()
+# %%
+""" Como funciona a curva Lift - Quanto maior a área entre a 
+curva de elevação e a linha de base, melhor o modelo """
+y_pro_ass = y_train_prob[:, 1].copy()
+y_pro_ass.sort()
+y_pro_ass.round(4)
+# %%
+df_analise = pd.DataFrame({"target": y_train, "prob": y_train_prob[:, 1]})
+df_analise.sort_values(by="prob", inplace=True, ascending=False)
 
+df_analise.head(100)["target"].mean() / df_analise["target"].mean()
+# %%
+
+# TESTAR O MODELO
+
+y_test_pred = model_pipe.predict(X_test)
+y_test_prob = model_pipe.predict_proba(X_test)
+
+# Medir o Modelo
+acc_test = round(100*metrics.accuracy_score(y_test, y_test_pred), 2)
+roc_test = metrics.roc_auc_score(y_test, y_test_prob[:, 1])
+
+print("Base Line: ", round((1-y_test.mean())*100, 2))
+print("acc_test", acc_test)
+print("roc_test", roc_test)
 
 # %%
 
@@ -258,39 +307,26 @@ skplt.metrics.plot_lift_curve(y_test, y_test_prob)
 plt.show()
 
 # %%
-skplt.metrics.plot_cumulative_gain(y_test, y_test_prob)
-plt.show()
+""" Como funciona a curva Lift - Quanto maior a área entre a 
+curva de elevação e a linha de base, melhor o modelo """
+y_pro_ass = y_test_prob[:, 1].copy()
+y_pro_ass.sort()
+y_pro_ass.round(4)
+# %%
+df_analise = pd.DataFrame({"target": y_test, "prob": y_test_prob[:, 1]})
+df_analise.sort_values(by="prob", inplace=True, ascending=False)
 
-""" Nesse Grafico de Ganho Acumulativo consigo verificar
-que 15% da Base já tenho todos que seriam assinates """
+df_analise.head(100)["target"].mean() / df_analise["target"].mean()
+
 # %%
 
-""" Com o modelo testado verificando a Base OOT(out off time),
-ou Base Fora do Tempo """
+###QUAIS SÃO AS VARIAVEIS MAIS IMPORTANTES PARA O NOSSO MODELO EM ORDEM 
+ 
+features_model = model_pipe[:-1].transform(X_train.head()).columns.tolist()
 
-X_oot, y_oot = df_oot[features], df_oot[target]
+fs_importance = pd.DataFrame({"importance":model_pipe[-1].feature_importances_,
+							  "feature":features_model})
 
-y_prob_oot = pipe_rf.predict_proba(X_oot)
-
-roc_oot = metrics.roc_auc_score(y_oot, y_prob_oot[:,1] )
-print("roc_train", roc_oot)
-
-#%%
-""" Metricas da Base Fora do Tempo(OOT) """
-
-skplt.metrics.plot_roc(y_oot, y_prob_oot)
-plt.show()
-#%%
-
-skplt.metrics.plot_lift_curve(y_oot, y_prob_oot)
-plt.show()
-
-# %%
-skplt.metrics.plot_cumulative_gain(y_oot, y_prob_oot)
-plt.show()
-
-""" Agora na Curva de Ganho para chegar a 100% tenho que abordar 
-40%, mais se pegar 20% pegando 88% de assinantes não está ruim. Se perceber
-10% da Base sobe 80% de assinantes, metrica muito boa """
-
+(fs_importance.sort_values("importance", ascending=False)
+			.head(15))
 # %%
