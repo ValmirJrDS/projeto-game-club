@@ -110,22 +110,22 @@ onehot = encoding.OneHotEncoder(drop_last=True, variables=cat_features)
 """ Random Forest """
 
 rf_clf = ensemble.RandomForestClassifier(n_estimators=200,
-									    min_samples_leaf=50,
-										n_jobs=-1,
-										random_state=42)
+					 min_samples_leaf=50,
+					 n_jobs=-1,
+					 random_state=42)
 									
 
 """ Ada Boost """
 
 ada_clf = ensemble.AdaBoostClassifier(n_estimators = 200,
-									    learning_rate = 0.8,
-										random_state = 42)
+				      learning_rate = 0.8,
+				      random_state = 42)
 
 """ Arvore de Decisão """
 
 dt_clf = tree.DecisionTreeClassifier(max_depth = 15,
-									    min_samples_leaf=50,
-										random_state = 42)
+				     min_samples_leaf=50,
+			       	     random_state = 42)
 
 """ Regressão Logistica """
 
@@ -133,10 +133,9 @@ rl_clf = linear_model.LogisticRegressionCV(cv=4, n_jobs=-1)
 
 """ Definir o Pipeline - Juntar todas as transformações em um único objeto
 
-		Depois dos testes o Random Forest se saiu melhor, iremos comentar os outros
+Depois dos testes o Random Forest se saiu melhor, iremos comentar os outros
 
-		na origem do código e Tunnar o Random.
-		"""
+na origem do código e Tunnar o Random."""
 
 """ Pipeline Random Forest """
 
@@ -144,13 +143,7 @@ rl_clf = linear_model.LogisticRegressionCV(cv=4, n_jobs=-1)
 params = {"n_estimators":[50,100,150,200],
 		  "min_samples_leaf": [5,10,20,50] }
 
-grid_search = model_selection.GridSearchCV(rf_clf,
-										   params, 
-										   n_jobs=1, 
-										   cv=4, 
-										   scoring='roc_auc',
-										   verbose=3,
-										   refit=True)
+grid_search = model_selection.GridSearchCV(rf_clf, params,n_jobs=1, cv=4,scoring='roc_auc',verbose=3,refit=True)
 
 pipe_rf = pipeline.Pipeline(steps = [("Imput 0", input_0),
                                      ("Imput -1", input_1),
